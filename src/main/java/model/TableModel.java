@@ -1,7 +1,6 @@
 package model;
 
 import javax.swing.table.AbstractTableModel;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -160,8 +159,38 @@ public class TableModel extends AbstractTableModel {
         String startLabel = query.substring(0, splitIndex);
         String endLabel = query.substring(splitIndex+1);
 
+        int[] rowColIndex1 = getRowColIndex(startLabel);
+        int[] rowColIndex2 = getRowColIndex(endLabel);
 
 
+        int topRowIndex = Math.max(rowColIndex1[0], rowColIndex2[0]);
+        int rightColIndex = Math.max(rowColIndex1[1], rowColIndex2[1]);
+
+        int bottomRowIndex = Math.min(rowColIndex1[0], rowColIndex2[0]);
+        int leftColIndex = Math.min(rowColIndex1[1], rowColIndex2[1]);
+
+        List<Object> result = new ArrayList<>();
+
+        if(topRowIndex >= data.size()) {
+            throw new IndexOutOfBoundsException("Row index out of bounds");
+        }
+        if(rightColIndex >= data.getFirst().size()) {
+            throw new IndexOutOfBoundsException("Column index out of bounds");
+        }
+
+        for (int i = bottomRowIndex; i <= topRowIndex; i++) {
+            for (int j = leftColIndex; j <= rightColIndex; j++) {
+                String value = data.get(i).get(j).getText();
+                try {
+                    Float floatValue = Float.parseFloat(value);
+                    System.out.println("Parsed float: " + floatValue);
+                    result.add(floatValue);
+                } catch(NumberFormatException e) {
+                    System.err.println("Invalid number format: " + value);
+                }
+            }
+        }
+        return result;
 
     }
 

@@ -58,7 +58,8 @@ public class Parser {
 
         if(token.getType() == TokenType.CELL_RANGE) {
             consume(TokenType.CELL_RANGE);
-
+            result.addAll(table.queryCellRange(token.getValue()));
+            return result;
         }
 
         if (token.getType() == TokenType.NUMBER) {
