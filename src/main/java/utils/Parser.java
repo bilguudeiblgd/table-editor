@@ -1,6 +1,8 @@
 package utils;
 
 import model.TableModel;
+import utils.functions.AvgFunction;
+import utils.functions.Function;
 import utils.functions.SumFunction;
 
 import java.util.ArrayList;
@@ -10,6 +12,7 @@ public class Parser {
     private final List<Token> tokens;
     private int pos = 0;
     private Token currentToken;
+//    Parser needs current table model for parsing cell values
     private TableModel table;
 
     public Parser(List<Token> tokens, TableModel table) {
@@ -41,6 +44,24 @@ public class Parser {
         }
     }
 
+    List<Object> parseFunctionArguments() {
+        List<Object> arguments = new ArrayList<>();
+        consume(TokenType.LEFT_PAR);
+
+        while(currentToken.getType() != TokenType.RIGHT_PAR) {
+//                        Can be just expr() or A1:B1 which is L1.
+            List<Object> argumentPack = expr();
+            System.out.println("Parsing argument: " + argumentPack.getFirst());
+            arguments.addAll(argumentPack);
+
+            if(currentToken.getType() == TokenType.COMMA) {
+                consume(TokenType.COMMA);
+            }
+        }
+        consume(TokenType.RIGHT_PAR);
+
+        return arguments;
+    }
     // TODO: finish Cell parser implementation
     private List<Object> L1() {
         List<Object> result = new ArrayList<>();
@@ -49,7 +70,7 @@ public class Parser {
         if (token.getType() == TokenType.CELL) {
             consume(TokenType.CELL);
             Token nextToken = peek(1);
-            Object obj = table.queryCell(token.getValue());
+            Object obj = table.queryCellValue(token.getValue());
 
             System.out.println("table query A1: " + obj.toString());
             result.add(obj);
@@ -58,7 +79,7 @@ public class Parser {
 
         if(token.getType() == TokenType.CELL_RANGE) {
             consume(TokenType.CELL_RANGE);
-            result.addAll(table.queryCellRange(token.getValue()));
+            result.addAll(table.queryCellRangeValues(token.getValue()));
             return result;
         }
 
@@ -77,37 +98,32 @@ public class Parser {
         }
     }
 
+
+
     private List<Object> L2() {
 //        If not function will go to L1.
         if (currentToken.getType() == TokenType.FUNCTION) {
+            Function function = new Function();
+
             switch (currentToken.getValue()) {
-                case "sum":
-                    System.out.println("Parsing sum function");
-                    SumFunction sumFunction = new SumFunction();
-                    consume(TokenType.FUNCTION);
-                    List<Object> arguments = new ArrayList<>();
-                    consume(TokenType.LEFT_PAR);
-
-                    while(currentToken.getType() != TokenType.RIGHT_PAR) {
-//                        Can be just expr() or A1:B1 which is L1.
-                        List<Object> argumentPack = expr();
-                        System.out.println("Parsing argument: " + argumentPack.getFirst());
-                        arguments.addAll(argumentPack);
-
-                        if(currentToken.getType() == TokenType.COMMA) {
-                            consume(TokenType.COMMA);
-                        }
-                    }
-
-                    consume(TokenType.RIGHT_PAR);
-                    sumFunction.addArguments(arguments);
-
-                    List<Object> funcResults = new ArrayList<>();
-
-                    funcResults.add(sumFunction.calculate());
-//                  Functions have 1 return for now.
-                    return funcResults;
+                case "SUM":
+                    function = new SumFunction();
+                    break;
+                case "AVG":
+                    function = new AvgFunction();
+                    break;
             }
+//            Parse array
+            consume(TokenType.FUNCTION);
+
+            List<Object> arguments = parseFunctionArguments();
+            function.addArguments(arguments);
+
+            List<Object> funcResults = new ArrayList<>();
+
+            funcResults.add(function.calculate());
+            return funcResults;
+
         }
 
         return L1();
@@ -145,7 +161,11 @@ public class Parser {
         while (currentToken.getValue().equals("*") || currentToken.getValue().equals("/")) {
             if (currentToken.getValue().equals("*")) {
                 consume(TokenType.BINARY_OPERATOR);
-                Object right = L3();
+                List<Object> rights = L3();
+                if (rights.isEmpty())
+                    throw new RuntimeException("Missing tokens on the rhl: " + rights);
+                Object right = rights.getFirst();
+
                 if (result instanceof Number && right instanceof Number) {
                     result = ((Number) result).floatValue() * ((Number) right).floatValue();
                     results.set(0, result);
@@ -154,7 +174,11 @@ public class Parser {
                 }
             } else if (currentToken.getValue().equals("/")) {
                 consume(TokenType.BINARY_OPERATOR);
-                Object right = L3();
+                List<Object> rights = L3();
+                if (rights.isEmpty())
+                    throw new RuntimeException("Missing tokens on the rhl: " + rights);
+                Object right = rights.getFirst();
+
                 if (result instanceof Number && right instanceof Number) {
                     result = ((Number) result).floatValue() / ((Number) right).floatValue();
                     results.set(0, result);
@@ -176,7 +200,11 @@ public class Parser {
         while (currentToken.getValue().equals("+") || currentToken.getValue().equals("-")) {
             if (currentToken.getValue().equals("+")) {
                 consume(TokenType.BINARY_OPERATOR);
-                Object right = L4();
+                List<Object> rights = L4();
+                if (rights.isEmpty())
+                    throw new RuntimeException("Missing tokens on the rhl: " + rights);
+                Object right = rights.getFirst();
+
                 if (result instanceof Number && right instanceof Number) {
                     result = ((Number) result).floatValue() + ((Number) right).floatValue();
                     results.set(0, result);
@@ -185,7 +213,11 @@ public class Parser {
                 }
             } else if (currentToken.getValue().equals("-")) {
                 consume(TokenType.BINARY_OPERATOR);
-                Object right = L4();
+                List<Object> rights = L4();
+                if (rights.isEmpty())
+                    throw new RuntimeException("Missing tokens on the rhl: " + rights);
+                Object right = rights.getFirst();
+
                 if (result instanceof Number && right instanceof Number) {
                     result = ((Number) result).floatValue() - ((Number) right).floatValue();
                     results.set(0, result);

@@ -1,15 +1,10 @@
 package ui;
 
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.JButton;
-import javax.swing.JTextField;
-import javax.swing.BoxLayout;
-import java.awt.BorderLayout;
+import javax.swing.*;
+import javax.swing.table.*;
+import java.awt.*;
+import java.awt.event.*;
 import model.TableModel;
-import java.awt.event.ActionListener;
-import java.awt.event.ActionEvent;
 
 public class TablePanel extends JPanel {
     private JTable table;
@@ -100,5 +95,52 @@ public class TablePanel extends JPanel {
                 tableModel.removeLastColumn();
             }
         });
+
+        // Customize table header to add button when hovered
+        JTableHeader tableHeader = table.getTableHeader();
+        tableHeader.setDefaultRenderer(new HeaderRenderer(table));
+        tableHeader.addMouseListener(new HeaderMouseListener());
+    }
+
+    private class HeaderRenderer extends DefaultTableCellRenderer {
+        private final JTable table;
+        private int hoveredColumn = -1;
+
+        public HeaderRenderer(JTable table) {
+            this.table = table;
+            table.getTableHeader().addMouseMotionListener(new MouseMotionAdapter() {
+                @Override
+                public void mouseMoved(MouseEvent e) {
+                    int col = table.columnAtPoint(e.getPoint());
+                    if (col != hoveredColumn) {
+                        hoveredColumn = col;
+                        table.getTableHeader().repaint();
+                    }
+                }
+            });
+        }
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            if (c instanceof JLabel) {
+                JLabel label = (JLabel) c;
+                label.setText(value.toString());
+                label.setIcon(column == hoveredColumn ? UIManager.getIcon("FileChooser.newFolderIcon") : null);
+                label.setHorizontalTextPosition(SwingConstants.LEFT);
+            }
+            return c;
+        }
+    }
+
+    private class HeaderMouseListener extends MouseAdapter {
+        @Override
+        public void mouseClicked(MouseEvent e) {
+            JTableHeader header = (JTableHeader) e.getSource();
+            int col = header.columnAtPoint(e.getPoint());
+            if (col != -1 && e.getClickCount() == 1 && SwingUtilities.isLeftMouseButton(e)) {
+                tableModel.addColumn("New Column");
+            }
+        }
     }
 }

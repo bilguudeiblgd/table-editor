@@ -10,13 +10,18 @@ import java.util.regex.Pattern;
 public class Lexer {
     private final String input;
     private int position;
-    final private int length;
-    final private HashMap<String, Boolean> functionNames = new HashMap<>();
+    private final int length;
+    private static final HashMap<String, Boolean> functionNames = new HashMap<>();
+
+    static {
+        functionNames.put("SUM", true);
+        functionNames.put("AVG", true);
+        // Add other function names here if needed
+    }
 
     public Lexer(String input) {
         this.input = input;
         this.length = input.length();
-        this.functionNames.put("sum", true);
         this.position = 0;
     }
 

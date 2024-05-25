@@ -3,8 +3,8 @@ package utils.functions;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class Function {
-    protected List<Object> arguments;
+public class Function {
+    List<Object> arguments;
 
     public Function() {
         this.arguments = new ArrayList<>();
@@ -18,7 +18,9 @@ public abstract class Function {
         arguments.addAll(args);
     }
 
-    public abstract Object calculate();
+    public Object calculate() {
+        return null;
+    }
 }
 
 

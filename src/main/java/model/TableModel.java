@@ -65,7 +65,9 @@ public class TableModel extends AbstractTableModel {
 
     @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-        data.get(rowIndex).set(columnIndex, new CellModel ((String) aValue, this) );
+        CellModel currentModel = data.get(rowIndex).get(columnIndex);
+        currentModel.setText((String) aValue ,this);
+        data.get(rowIndex).set(columnIndex, currentModel );
         fireTableCellUpdated(rowIndex, columnIndex);
     }
 
@@ -101,6 +103,16 @@ public class TableModel extends AbstractTableModel {
             fireTableStructureChanged();
         }
     }
+
+    public Boolean isValidCell(int rowIndex, int colIndex) {
+        if(data.isEmpty()) return false;
+        if(data.getFirst().isEmpty()) return false;
+
+        if(rowIndex >= data.size()) {
+            return false;
+        }
+        return colIndex < data.getFirst().size();
+    }
 //    We assume query comes in format [A-Z]+[0-9]+$. Example: A1, B2, etc. This was validated by the Lexer.
 
     public int[] getRowColIndex(String query) {
@@ -128,12 +140,21 @@ public class TableModel extends AbstractTableModel {
         return new int[]{rowIndex, colIndex};
     }
 
-    public Object queryCell(String query) {
+    public CellModel queryCellModel(String query) {
         int[] rowColIndex = getRowColIndex(query);
         int rowIndex = rowColIndex[0];
         int colIndex = rowColIndex[1];
 
-        String value = data.get(rowIndex).get(colIndex).getText();
+        if(!isValidCell(rowIndex, colIndex)) {
+            throw new IndexOutOfBoundsException("Index out of bounds");
+        }
+
+        return data.get(rowIndex).get(colIndex);
+    }
+
+    public Object queryCellValue(String query) {
+        String value = queryCellModel(query).getText();
+
         Object valueObject = new Object();
         try {
             Float floatValue = Float.parseFloat(value);
@@ -145,9 +166,8 @@ public class TableModel extends AbstractTableModel {
 
         return valueObject;
     }
-    public List<Object> queryCellRange(String query) {
+    public List<CellModel> queryCellRangeModels(String query) {
         int splitIndex = 0;
-//
 
         for (int i = 0; i < query.length(); i++) {
             char ch = query.charAt(i);
@@ -169,28 +189,35 @@ public class TableModel extends AbstractTableModel {
         int bottomRowIndex = Math.min(rowColIndex1[0], rowColIndex2[0]);
         int leftColIndex = Math.min(rowColIndex1[1], rowColIndex2[1]);
 
-        List<Object> result = new ArrayList<>();
 
-        if(topRowIndex >= data.size()) {
-            throw new IndexOutOfBoundsException("Row index out of bounds");
+        if(!isValidCell(bottomRowIndex, rightColIndex)) {
+            throw new IndexOutOfBoundsException("Index out of bounds");
         }
-        if(rightColIndex >= data.getFirst().size()) {
-            throw new IndexOutOfBoundsException("Column index out of bounds");
-        }
+
+        List<CellModel> results = new ArrayList<>();
 
         for (int i = bottomRowIndex; i <= topRowIndex; i++) {
             for (int j = leftColIndex; j <= rightColIndex; j++) {
-                String value = data.get(i).get(j).getText();
-                try {
-                    Float floatValue = Float.parseFloat(value);
-                    System.out.println("Parsed float: " + floatValue);
-                    result.add(floatValue);
-                } catch(NumberFormatException e) {
-                    System.err.println("Invalid number format: " + value);
-                }
+                results.add(data.get(i).get(j));
             }
         }
-        return result;
+        return results;
+    }
+
+    public List<Object> queryCellRangeValues(String query) {
+        List<Object> results = new ArrayList<>();
+        List<CellModel> models = queryCellRangeModels(query);
+        for(CellModel model : models) {
+            String value = model.getText();
+            try {
+                Float floatValue = Float.parseFloat(value);
+                System.out.println("Parsed float: " + floatValue);
+                results.add(floatValue);
+            } catch(NumberFormatException e) {
+                System.err.println("Invalid number format: " + value);
+            }
+        }
+        return results;
 
     }
 
