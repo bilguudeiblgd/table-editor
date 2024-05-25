@@ -1,0 +1,5 @@
+package utils;
+
+public enum TokenType {
+    UNARY_OPERATOR, BINARY_OPERATOR, EOF, FUNCTION, VARIABLE, LEFT_PAR, RIGHT_PAR, NUMBER
+}
