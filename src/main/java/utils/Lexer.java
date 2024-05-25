@@ -41,6 +41,12 @@ public class Lexer {
         Matcher matcher = pattern.matcher(input);
         return matcher.matches();
     }
+    public static boolean isValidCellRange(String input) {
+        String regex = "^[A-Z]+[0-9]+:[A-Z]+[0-9]+$";
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(input);
+        return matcher.matches();
+    }
 
 
     private Token lexNumber() {
@@ -53,7 +59,7 @@ public class Lexer {
 
     private Token lexIdentifier() {
         StringBuilder identifier = new StringBuilder();
-        while (Character.isLetter(peek()) || Character.isDigit(peek()) || peek() == '_') {
+        while (Character.isLetter(peek()) || Character.isDigit(peek()) || peek() == '_' || peek() == ':') {
             identifier.append(advance());
         }
         String value = identifier.toString();
@@ -61,9 +67,12 @@ public class Lexer {
             return new Token(TokenType.FUNCTION, value);
 
 //      Variable are CELL variables.
-        if (!isValidCellVariable(value))
-            throw new RuntimeException("Wrong cell value");
-        return new Token(TokenType.VARIABLE, value);
+        if (isValidCellVariable(value))
+            return new Token(TokenType.CELL, value);
+        if (isValidCellRange(value))
+            return new Token(TokenType.CELL_RANGE, value);
+
+        throw new RuntimeException("Unexpected identifier: " + value);
     }
 
     public List<Token> tokenize() {
@@ -112,6 +121,10 @@ public class Lexer {
                 case '/':
                 case '^':
                     tokens.add(new Token(TokenType.BINARY_OPERATOR, Character.toString(current)));
+                    advance();
+                    break;
+                case ',':
+                    tokens.add(new Token(TokenType.COMMA, Character.toString(current)));
                     advance();
                     break;
                 default:

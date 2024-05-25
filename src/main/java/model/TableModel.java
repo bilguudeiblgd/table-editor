@@ -23,11 +23,11 @@ public class TableModel extends AbstractTableModel {
         for(int i = 0; i < 10; i++) {
             ArrayList<CellModel> row = new ArrayList<>();
             for(int j = 0; j < getColumnCount(); j++) {
-                row.add(new CellModel(""));
+                row.add(new CellModel("",this));
             }
 //          Helper labels for the row
             String numberLabel = Integer.toString(i);
-            row.set(0, new CellModel(numberLabel));
+            row.set(0, new CellModel(numberLabel,this));
             data.add(row);
         }
 
@@ -66,14 +66,14 @@ public class TableModel extends AbstractTableModel {
 
     @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-        data.get(rowIndex).set(columnIndex, new CellModel ((String) aValue) );
+        data.get(rowIndex).set(columnIndex, new CellModel ((String) aValue, this) );
         fireTableCellUpdated(rowIndex, columnIndex);
     }
 
     public void addRow(String value) {
         List<CellModel> row = new ArrayList<>();
         for (int i = 0; i < getColumnCount(); i++) {
-            row.add(new CellModel(value) );
+            row.add(new CellModel(value, this) );
         }
         data.add(row);
         fireTableRowsInserted(data.size() - 1, data.size() - 1);
@@ -87,7 +87,7 @@ public class TableModel extends AbstractTableModel {
     public void addColumn(String columnName) {
         columnNames.add(columnName);
         for (List<CellModel> row : data) {
-            row.add(new CellModel((String) ""));
+            row.add(new CellModel((String) "", this));
         }
         fireTableStructureChanged();
     }
@@ -103,9 +103,10 @@ public class TableModel extends AbstractTableModel {
         }
     }
 //    We assume query comes in format [A-Z]+[0-9]+$. Example: A1, B2, etc. This was validated by the Lexer.
-    public String queryCell(String query) {
-        StringBuilder letterPart = new StringBuilder();
 
+    public int[] getRowColIndex(String query) {
+        StringBuilder letterPart = new StringBuilder();
+        System.out.println(query);
         int splitIndex = 0;
         for (int i = 0; i < query.length(); i++) {
             char ch = query.charAt(i);
@@ -123,10 +124,46 @@ public class TableModel extends AbstractTableModel {
         for (int i = 0; i < columnLabel.length(); i++) {
             colIndex = colIndex * 26 + (columnLabel.charAt(i) - 'A' + 1);
         }
-
         int rowIndex = Integer.parseInt(rowNumbers);
-
-        return data.get(rowIndex).get(colIndex).getText();
+        System.out.println(rowIndex + " " + colIndex);
+        return new int[]{rowIndex, colIndex};
     }
+
+    public Object queryCell(String query) {
+        int[] rowColIndex = getRowColIndex(query);
+        int rowIndex = rowColIndex[0];
+        int colIndex = rowColIndex[1];
+
+        String value = data.get(rowIndex).get(colIndex).getText();
+        Object valueObject = new Object();
+        try {
+            Float floatValue = Float.parseFloat(value);
+            System.out.println("Parsed float: " + floatValue);
+            valueObject = floatValue;
+        } catch(NumberFormatException e) {
+            System.err.println("Invalid number format: " + value);
+        }
+
+        return valueObject;
+    }
+    public List<Object> queryCellRange(String query) {
+        int splitIndex = 0;
+//
+
+        for (int i = 0; i < query.length(); i++) {
+            char ch = query.charAt(i);
+            if(ch == ':') {
+                splitIndex = i;
+                break;
+            }
+        }
+        String startLabel = query.substring(0, splitIndex);
+        String endLabel = query.substring(splitIndex+1);
+
+
+
+
+    }
+
 
 }

@@ -9,11 +9,18 @@ public class CellModel {
         this.formula="";
         this.text="";
     }
-    CellModel(String text) {
+    CellModel(String text, TableModel table) {
         this.text = text;
         if(text.startsWith("=")) {
             this.formula = text.substring(1);
-            this.text = Integer.toString(Evaluator.evaluate(this.formula));
+            Object result;
+            try {
+                result = Evaluator.evaluate(this.formula, table);
+                this.text = result.toString();
+
+            } catch(RuntimeException e) {
+                this.text = "ERROR";
+            }
         }
     }
 
@@ -21,11 +28,16 @@ public class CellModel {
         return text;
     }
 
-    public void setText(String text) {
+    public void setText(String text, TableModel table) {
         this.text = text;
         if(text.startsWith("=")) {
             this.formula = text.substring(1);
-            this.text = Integer.toString(Evaluator.evaluate(this.formula));
+            Object result;
+            try {
+                result = Evaluator.evaluate(this.formula, table);
+            } catch(RuntimeException e) {
+                this.text = "ERROR";
+            }
         }
     }
 
