@@ -1,4 +1,4 @@
-package utils;
+package parser;
 import java.util.Objects;
 
 public class Token {

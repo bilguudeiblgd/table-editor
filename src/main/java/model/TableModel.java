@@ -14,12 +14,13 @@ public class TableModel extends AbstractTableModel {
         data = new ArrayList<>();
         columnNames = new ArrayList<>();
 
+//        Initialize with 10 cols
         columnNames.add(" ");
         columnNames.add("A");
-        columnNames.add("B");
-        columnNames.add("C");
-        columnNames.add("D");
-        columnNames.add("E");
+
+        for(int i = 0; i < 8; i++) {
+            columnNames.add(getNextColumnLabel());
+        }
 
         for(int i = 0; i < 10; i++) {
             ArrayList<CellModel> row = new ArrayList<>();
@@ -79,41 +80,26 @@ public class TableModel extends AbstractTableModel {
         // Convert the last column label to uppercase
         String lastCol = columnNames.getLast().toUpperCase();
 
-        // Start with an empty StringBuilder to build the next column label
+        // Convert the column label to an integer
+        int colNumber = 0;
+        for (int i = 0; i < lastCol.length(); i++) {
+            colNumber = colNumber * 26 + (lastCol.charAt(i) - 'A' + 1);
+        }
+
+        // Increment the column number by 1
+        colNumber++;
+
+        // Convert the integer back to a column label
         StringBuilder nextColLabel = new StringBuilder();
-
-        // Iterate through each character in the last column label
-        for (int i = lastCol.length() - 1; i >= 0; i--) {
-            char currentChar = lastCol.charAt(i);
-
-            // If the current character is 'Z', carry over to the next position
-            if (currentChar == 'Z') {
-                // Replace 'Z' with 'A' and add 'A' to the next position
-                nextColLabel.insert(0, 'A');
-            } else {
-                // Increment the current character by 1
-                nextColLabel.insert(0, (char) (currentChar + 1));
-
-                // Append the remaining characters from the last column label
-                nextColLabel.insert(0, lastCol.substring(0, i));
-
-                // No further carry-over needed, break the loop
-                break;
-            }
+        while (colNumber > 0) {
+            colNumber--; // Adjust for 0-based index
+            nextColLabel.insert(0, (char) ('A' + colNumber % 26));
+            colNumber /= 26;
         }
 
         return nextColLabel.toString();
     }
 
-
-    public void addRow(String value) {
-        List<CellModel> row = new ArrayList<>();
-        for (int i = 0; i < getColumnCount(); i++) {
-            row.add(new CellModel(value, this) );
-        }
-        data.add(row);
-        fireTableRowsInserted(data.size() - 1, data.size() - 1);
-    }
 
     public void removeRow(int rowIndex) {
         data.remove(rowIndex);
@@ -122,6 +108,13 @@ public class TableModel extends AbstractTableModel {
     public List<CellModel> createEmptyColumn() {
         List<CellModel> column = new ArrayList<>();
         for(int i = 0; i < getRowCount(); i++) {
+            column.add(new CellModel("",this));
+        }
+        return column;
+    }
+    public List<CellModel> createEmptyRow() {
+        List<CellModel> column = new ArrayList<>();
+        for(int i = 0; i < getColumnCount(); i++) {
             column.add(new CellModel("",this));
         }
         return column;
@@ -157,6 +150,37 @@ public class TableModel extends AbstractTableModel {
         fireTableStructureChanged();
     }
 
+    public void insertRow(int rowIndex, List<CellModel> rowData) {
+
+//      Append one more row
+        List<CellModel> emptyRow = createEmptyRow();
+//      Get the latest label
+        emptyRow.set(0, new CellModel(Integer.toString(data.size()), this));
+        data.add(emptyRow);
+
+
+        Set<CellModel> dependedModels = new HashSet<>();
+//        For each row move 1 to down
+        for (int i = getRowCount() - 1; i > rowIndex; i--) {
+//            For each element in the column
+            for(int j = 1; j < getColumnCount(); j++) {
+                dependedModels.addAll(data.get(i-1).get(j).getDependsOnMe());
+                CellModel newCell = new CellModel((String) data.get(i-1).get(j).getValue(), this);
+                data.get(i).set(j, newCell);
+                data.get(i-1).set(j, new CellModel("", this));
+            }
+        }
+//      Insert the actual row, j = 0, is reserved for labels.
+        for (int j = 1; j < getColumnCount(); j++) {
+            data.get(rowIndex).set(j, rowData.get(j));
+        }
+
+        for(CellModel model : dependedModels) {
+            model.revaluate(this);
+        }
+        fireTableStructureChanged();
+    }
+
     public void deleteColumn(int columnIndex) {
         // Remove the column from columnNames
         Set<CellModel> dependedModels = new HashSet<>();
@@ -168,6 +192,28 @@ public class TableModel extends AbstractTableModel {
                 CellModel newCell = new CellModel((String) data.get(j).get(i+1).getValue(), this);
                 data.get(j).set(i, newCell);
                 data.get(j).set(i+1, new CellModel("", this));
+            }
+        }
+
+        for(CellModel model : dependedModels) {
+            model.revaluate(this);
+        }
+
+        // Notify listeners that the table structure has changed
+        fireTableStructureChanged();
+    }
+
+    public void deleteRow(int rowIndex) {
+        // Remove the column from columnNames
+        Set<CellModel> dependedModels = new HashSet<>();
+//        For each column move 1 to right
+        for (int i = rowIndex ; i < getRowCount() - 1; i++) {
+//            For each element in the column
+            for(int j = 0; j < getColumnCount(); j++) {
+                dependedModels.addAll(data.get(i+1).get(j).getDependsOnMe());
+                CellModel newCell = new CellModel((String) data.get(i+1).get(j).getValue(), this);
+                data.get(i).set(j, newCell);
+                data.get(i+1).set(j, new CellModel("", this));
             }
         }
 

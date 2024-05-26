@@ -1,4 +1,4 @@
-package utils.functions;
+package parser.functions;
 
 public class AvgFunction extends Function {
 

@@ -5,16 +5,15 @@ import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.*;
 import model.TableModel;
+import ui.utils.PopupMenu;
 
 public class TablePanel extends JPanel {
     private JTable table;
     private TableModel tableModel;
     private JTextField rowInputField;
     private JTextField columnInputField;
-    private JButton addRowButton;
-    private JButton removeRowButton;
-    private JButton addColumnButton;
-    private JButton removeColumnButton;
+    private JButton addTenRowsButton; // New button for adding 10 more rows
+    private JButton addTenColumnsButton; // New button for adding 10 more columns
 
     public TablePanel() {
         setLayout(new BorderLayout());
@@ -32,13 +31,22 @@ public class TablePanel extends JPanel {
             }
         };
 
-        add(new JScrollPane(table), BorderLayout.CENTER);
+
+        // Wrap the table in a scroll pane to enable scrolling
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+        JScrollPane scrollPane = new JScrollPane(table);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        add(scrollPane, BorderLayout.CENTER);
 
         // Enable grid lines
         table.setShowGrid(true);
 
+        // Resize the cells in the labelColumn
+        TableColumn labelColumn = table.getColumnModel().getColumn(0);
+        labelColumn.setMaxWidth(15);
+
         // Set the grid color (optional)
-        table.setGridColor(java.awt.Color.BLACK);
+        table.setGridColor(Color.DARK_GRAY);
 
         rowInputField = new JTextField(20);
         columnInputField = new JTextField(20);
@@ -46,8 +54,49 @@ public class TablePanel extends JPanel {
         controlPanel.setLayout(new BoxLayout(controlPanel, BoxLayout.Y_AXIS));
 
         table.addMouseListener(new MouseListener());
-//        add(controlPanel, BorderLayout.SOUTH);
 
+        // Create the "Add 10 More Rows" button
+        addTenRowsButton = new JButton("Add 10 More Rows");
+        addTenRowsButton.addActionListener(e -> {
+            for (int i = 0; i < 10; i++) {
+                tableModel.insertRow(table.getRowCount(), tableModel.createEmptyRow());
+            }
+        });
+
+        // Create the "Add 10 More Columns" button
+        addTenColumnsButton = new JButton("Add 10 More Columns");
+        addTenColumnsButton.addActionListener(e -> {
+            int colCount = tableModel.getColumnCount();
+            for (int i = 0; i < 10; i++) {
+                tableModel.insertColumn(table.getColumnCount(), tableModel.createEmptyColumn());
+            }
+        });
+
+        // Create a panel to hold the "Add 10 More Rows" button and add it to the bottom of the table
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
+        buttonPanel.add(addTenRowsButton);
+        add(buttonPanel, BorderLayout.SOUTH);
+
+        // Create a panel to hold the "Add 10 More Columns" button and add it to the right side of the table
+        JPanel rightButtonPanel = new JPanel();
+        rightButtonPanel.setLayout(new BorderLayout());
+        rightButtonPanel.add(addTenColumnsButton, BorderLayout.SOUTH);
+        add(rightButtonPanel, BorderLayout.EAST);
+    }
+
+    private void printColumnDetails() {
+        TableColumnModel columnModel = table.getColumnModel();
+        for (int i = 0; i < columnModel.getColumnCount(); i++) {
+            TableColumn column = columnModel.getColumn(i);
+            System.out.println("Column Index: " + i);
+            System.out.println("Preferred Width: " + column.getPreferredWidth());
+            System.out.println("Min Width: " + column.getMinWidth());
+            System.out.println("Max Width: " + column.getMaxWidth());
+            System.out.println("Width: " + column.getWidth());
+            System.out.println("Header Value: " + column.getHeaderValue());
+            System.out.println("------------------------------------");
+        }
     }
 
     private class MouseListener extends MouseAdapter {
@@ -59,91 +108,14 @@ public class TablePanel extends JPanel {
 
                 int col = table.columnAtPoint(e.getPoint());
                 int row = table.rowAtPoint(e.getPoint());
-                if (col != -1 && row != -1) {
-                    JPopupMenu popupMenu = createHeaderPopupMenu(col, row);
+                // Col 0 is our number labels
+                if (col != 0 && col != -1 && row != -1) {
+                    JPopupMenu popupMenu = PopupMenu.createHeaderPopupMenu(col, row, tableModel);
                     popupMenu.show(table, e.getX(), e.getY());
                 }
             }
         }
     }
 
-    private JPopupMenu createHeaderPopupMenu(int colIndex, int rowIndex) {
-        JPopupMenu popupMenu = new JPopupMenu();
-        System.out.println("Row index: " + rowIndex);
-        System.out.println("Column index: " + colIndex);
-        JMenuItem addColumnLeft = new JMenuItem("Add Column Left");
-        addColumnLeft.addActionListener(e -> {
-            tableModel.insertColumn(colIndex, tableModel.createEmptyColumn());
-        });
-        popupMenu.add(addColumnLeft);
 
-        JMenuItem addColumnRight = new JMenuItem("Add Column Right");
-        addColumnRight.addActionListener(e -> {
-            tableModel.insertColumn(colIndex + 1, tableModel.createEmptyColumn());
-        });
-        popupMenu.add(addColumnRight);
-
-        JMenuItem addRowUp = new JMenuItem("Add Row Up");
-        addRowUp.addActionListener(e -> {
-            tableModel.addRow("");
-        });
-        popupMenu.add(addRowUp);
-
-        JMenuItem addRowDown = new JMenuItem("Add Row Down");
-        addRowDown.addActionListener(e -> {
-            tableModel.addRow("");
-        });
-        popupMenu.add(addRowDown);
-
-        JMenuItem deleteCol = new JMenuItem("Delete Column");
-        deleteCol.addActionListener(e -> {
-            tableModel.deleteColumn(colIndex);
-        });
-        popupMenu.add(deleteCol);
-
-
-        return popupMenu;
-    }
-
-//    private class HeaderRenderer extends DefaultTableCellRenderer {
-//        private final JTable table;
-//        private int hoveredColumn = -1;
-//
-//        public HeaderRenderer(JTable table) {
-//            this.table = table;
-//            table.getTableHeader().addMouseMotionListener(new MouseMotionAdapter() {
-//                @Override
-//                public void mouseMoved(MouseEvent e) {
-//                    int col = table.columnAtPoint(e.getPoint());
-//                    if (col != hoveredColumn) {
-//                        hoveredColumn = col;
-//                        table.getTableHeader().repaint();
-//                    }
-//                }
-//            });
-//        }
-//
-//        @Override
-//        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-//            Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-//            if (c instanceof JLabel) {
-//                JLabel label = (JLabel) c;
-//                label.setText(value.toString());
-//                label.setIcon(column == hoveredColumn ? UIManager.getIcon("FileChooser.newFolderIcon") : null);
-//                label.setHorizontalTextPosition(SwingConstants.LEFT);
-//            }
-//            return c;
-//        }
-//    }
-//
-//    private class HeaderMouseListener extends MouseAdapter {
-//        @Override
-//        public void mouseClicked(MouseEvent e) {
-//            JTableHeader header = (JTableHeader) e.getSource();
-//            int col = header.columnAtPoint(e.getPoint());
-//            if (col != -1 && e.getClickCount() == 1 && SwingUtilities.isLeftMouseButton(e)) {
-//                tableModel.addColumn("New Column");
-//            }
-//        }
-//    }
 }

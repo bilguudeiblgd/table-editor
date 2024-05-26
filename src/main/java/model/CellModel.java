@@ -1,10 +1,10 @@
 package model;
+import model.utils.CycleDetector;
 
-import utils.Evaluator;
-import utils.Lexer;
-import utils.Token;
-import utils.TokenType;
-
+import parser.Evaluator;
+import parser.Lexer;
+import parser.Token;
+import parser.TokenType;
 import java.util.*;
 
 public class CellModel {
@@ -109,7 +109,9 @@ public class CellModel {
         dependsOnMe.add(cell);
     }
     public void propogateChanges(TableModel table) {
-
+        if(CycleDetector.hasCycle(this)) {
+            throw new RuntimeException("Dependency cycle detected!");
+        }
         for ( CellModel model : dependsOnMe) {
             System.out.println("Propogating " + model.getDisplayText());
             model.revaluate(table);
@@ -130,6 +132,7 @@ public class CellModel {
             propogateChanges(table);
         }
     }
+
 
 //    public String getCellLabel () {
 //

@@ -1,10 +1,10 @@
-package utils;
+package parser;
 
 import model.TableModel;
-import utils.functions.AvgFunction;
-import utils.functions.Function;
-import utils.functions.PowFunction;
-import utils.functions.SumFunction;
+import parser.functions.AvgFunction;
+import parser.functions.Function;
+import parser.functions.PowFunction;
+import parser.functions.SumFunction;
 
 import java.util.ArrayList;
 import java.util.List;
