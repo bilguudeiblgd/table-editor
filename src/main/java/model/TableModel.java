@@ -76,6 +76,10 @@ public class TableModel extends AbstractTableModel {
         fireTableCellUpdated(rowIndex, columnIndex);
     }
 
+    public Object createCell(String value) {
+        return (Object) new CellModel(value, this);
+    }
+
     public String getNextColumnLabel() {
         // Convert the last column label to uppercase
         String lastCol = columnNames.getLast().toUpperCase();

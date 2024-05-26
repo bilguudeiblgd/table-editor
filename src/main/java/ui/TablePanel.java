@@ -4,6 +4,10 @@ import javax.swing.*;
 import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.datatransfer.*;
+import java.io.IOException;
+
+import model.CellModel;
 import model.TableModel;
 import ui.utils.PopupMenu;
 
@@ -14,6 +18,8 @@ public class TablePanel extends JPanel {
     private JTextField columnInputField;
     private JButton addTenRowsButton; // New button for adding 10 more rows
     private JButton addTenColumnsButton; // New button for adding 10 more columns
+    private Point selectionStart;
+    private Point selectionEnd;
 
     public TablePanel() {
         setLayout(new BorderLayout());
@@ -37,6 +43,12 @@ public class TablePanel extends JPanel {
         JScrollPane scrollPane = new JScrollPane(table);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         add(scrollPane, BorderLayout.CENTER);
+
+        // Disable row selection
+        table.setRowSelectionAllowed(false);
+
+        // Enable cell selection
+        table.setCellSelectionEnabled(true);
 
         // Enable grid lines
         table.setShowGrid(true);
@@ -83,6 +95,30 @@ public class TablePanel extends JPanel {
         rightButtonPanel.setLayout(new BorderLayout());
         rightButtonPanel.add(addTenColumnsButton, BorderLayout.SOUTH);
         add(rightButtonPanel, BorderLayout.EAST);
+
+
+        // Create a copy action and bind it to Ctrl+C
+        Action copyAction = new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                System.out.println("Copy action: " + e.toString());
+                copySelectedCellsToClipboard();
+            }
+        };
+        table.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_C, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()), "copyAction");
+
+        // Create a paste action and bind it to Ctrl+V
+        Action pasteAction = new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                pasteFromClipboard();
+            }
+        };
+        table.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_V, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()), "pasteAction");
+
+
+        table.getActionMap().put("pasteAction", pasteAction);
+        table.getActionMap().put("copyAction", copyAction);
     }
 
     private void printColumnDetails() {
@@ -99,7 +135,75 @@ public class TablePanel extends JPanel {
         }
     }
 
+    private void copySelectedCellsToClipboard() {
+        StringBuilder clipboardData = new StringBuilder();
+        int[] rows = table.getSelectedRows();
+        int[] cols = table.getSelectedColumns();
+
+        for (int i = 0; i < rows.length; i++) {
+            for (int j = 0; j < cols.length; j++) {
+                CellModel cell = (CellModel) table.getValueAt(rows[i], cols[j]);
+//              Clipboard: rows:cols:expression
+                clipboardData.append( i + selectionStart.y).append(":").append(j + selectionStart.x).append(":").append(cell.getValue());
+                if (j < cols.length - 1) {
+                    clipboardData.append('\t');
+                }
+            }
+            clipboardData.append('\n');
+        }
+        System.out.println("Clipboard Data: " + clipboardData);
+        StringSelection stringSelection = new StringSelection(clipboardData.toString());
+        Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+        clipboard.setContents(stringSelection, null);
+    }
+
+
+    private void pasteFromClipboard() {
+        Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+        Transferable transferable = clipboard.getContents(null);
+        if (transferable != null && transferable.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+            try {
+                String clipboardData = (String) transferable.getTransferData(DataFlavor.stringFlavor);
+                String[] rows = clipboardData.split("\n");
+                int startRow = table.getSelectedRow();
+                int startCol = table.getSelectedColumn();
+                for (int i = 0; i < rows.length; i++) {
+                    String[] cells = rows[i].split("\t");
+                    for (int j = 0; j < cells.length; j++) {
+                        String[] parts = cells[j].split(":");
+//                      #TODO:  Use row,col for translating the expression's coordinates
+                        int row = Integer.parseInt(parts[0]);
+                        int col = Integer.parseInt(parts[1]);
+                        String value = "";
+                        if(!parts[2].isEmpty()) {
+                            value = parts[2];
+                        }
+                        table.setValueAt(value, startRow + i, startCol + j);
+                    }
+                }
+            } catch (UnsupportedFlavorException | IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+
+
+    private void selectCells(Point start, Point end) {
+        if (start != null && end != null) {
+            int minX = Math.min(start.x, end.x);
+            int minY = Math.min(start.y, end.y);
+            int maxX = Math.max(start.x, end.x);
+            int maxY = Math.max(start.y, end.y);
+            table.getSelectionModel().addSelectionInterval(minY, maxY);
+            table.getColumnModel().getSelectionModel().addSelectionInterval(minX, maxX);
+        }
+    }
+
+
     private class MouseListener extends MouseAdapter {
+
+
         @Override
         public void mouseClicked(MouseEvent e) {
             if (SwingUtilities.isRightMouseButton(e)) {
@@ -115,6 +219,33 @@ public class TablePanel extends JPanel {
                 }
             }
         }
+
+        @Override
+        public void mousePressed(MouseEvent e) {
+            int row = table.rowAtPoint(e.getPoint());
+            int col = table.columnAtPoint(e.getPoint());
+            selectionStart = new Point(col, row);
+            selectionEnd = new Point(col, row);
+            table.getSelectionModel().clearSelection();
+        }
+
+        @Override
+        public void mouseReleased(MouseEvent e) {
+            int row = table.rowAtPoint(e.getPoint());
+            int col = table.columnAtPoint(e.getPoint());
+            selectionEnd = new Point(col, row);
+            selectCells(selectionStart, selectionEnd);
+        }
+
+        @Override
+        public void mouseDragged(MouseEvent e) {
+            int row = table.rowAtPoint(e.getPoint());
+            int col = table.columnAtPoint(e.getPoint());
+            selectionEnd = new Point(col, row);
+            selectCells(selectionStart, selectionEnd);
+        }
+
+
     }
 
 
