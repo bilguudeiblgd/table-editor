@@ -8,42 +8,67 @@ import utils.TokenType;
 import java.util.*;
 
 public class CellModel {
+//    Value is any input. Either expression or just text.
+    String value;
+//    What flows into the parser
     String expression;
-    String text;
-//    Stores what depends on this cell.
+//    What is displayed on the screen
+    String displayText;
+//    Stores which cells depends on this cell.
     Set<CellModel> dependsOnMe;
     CellModel() {
+        this.value = "";
         this.expression ="";
-        this.text="";
+        this.displayText ="";
     }
-    CellModel(String text, TableModel table) {
-        this.text = text;
+    CellModel(String value, TableModel table) {
+        this.value = value;
         this.expression = "";
         dependsOnMe = new HashSet<>();
-        if(text.startsWith("=")) {
-            this.expression = text.substring(1);
-            evaluateExpression(table);
-            updateDependency(table);
-            propogateChanges(table);
-        }
-        else
-            propogateChanges(table);
-    }
+        if(this.value.startsWith("=")) {
+            this.expression = this.value.substring(1);
+            try {
+                evaluateExpression(table);
+                updateDependency(table);
+                propogateChanges(table);
+            } catch (Exception e) {
+                e.printStackTrace();
+                this.displayText += "ERR#";
+            }
 
-    public String getText() {
-        return text;
-    }
-
-    public void setText(String text, TableModel table) {
-        this.text = text;
-        System.out.println("Writing to cell");
-        if(text.startsWith("=")) {
-            this.expression = text.substring(1);
-            evaluateExpression(table);
-            updateDependency(table);
-            propogateChanges(table);
         }
         else {
+            this.displayText = this.value;
+            propogateChanges(table);
+        }
+    }
+
+    public String getDisplayText() {
+        return this.displayText;
+    }
+    public String getValue() {
+        return this.value;
+    }
+    private String getExpression() {
+        return this.expression;
+    }
+
+    public void setValue(String value, TableModel table) {
+        this.value = value;
+        System.out.println("Writing to cell");
+        if(this.value.startsWith("=")) {
+            this.expression = this.value.substring(1);
+            try {
+                evaluateExpression(table);
+                updateDependency(table);
+                propogateChanges(table);
+            } catch (Exception e) {
+                e.printStackTrace();
+                this.displayText = "ERR#";
+            }
+        }
+        else {
+            this.displayText = this.value;
             propogateChanges(table);
         }
     }
@@ -52,10 +77,10 @@ public class CellModel {
         Object result;
         try {
             result = Evaluator.evaluate(this.expression, table);
-            this.text = result.toString();
+            this.displayText = result.toString();
 //            As this cell's value changed we need to propogate the changes to other cells that depend on this cell
         } catch(RuntimeException e) {
-            this.text = "ERROR";
+            this.displayText = "ERROR";
         }
     }
     public void updateDependency(TableModel table) {
@@ -77,14 +102,32 @@ public class CellModel {
             }
         }
     }
+    public Set<CellModel> getDependsOnMe() {
+        return this.dependsOnMe;
+    }
     public void addDependency(CellModel cell) {
         dependsOnMe.add(cell);
     }
     public void propogateChanges(TableModel table) {
 
         for ( CellModel model : dependsOnMe) {
-            System.out.println("Propogating " + model.getText());
-            model.evaluateExpression(table);
+            System.out.println("Propogating " + model.getDisplayText());
+            model.revaluate(table);
+        }
+    }
+    public void revaluate(TableModel table) {
+        if(this.value.startsWith("=")) {
+            try {
+                evaluateExpression(table);
+                updateDependency(table);
+                propogateChanges(table);
+            } catch (Exception e) {
+                e.printStackTrace();
+                this.displayText += "ERR#";
+            }
+        }
+        else {
+            propogateChanges(table);
         }
     }
 

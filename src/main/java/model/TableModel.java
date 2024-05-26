@@ -2,7 +2,9 @@ package model;
 
 import javax.swing.table.AbstractTableModel;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class TableModel extends AbstractTableModel {
     private List<List<CellModel>> data;
@@ -44,13 +46,13 @@ public class TableModel extends AbstractTableModel {
         return columnNames.size();
     }
 
+
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
         List<CellModel> row = data.get(rowIndex);
         if(row.isEmpty())
-            return "";
-
-        return row.get(columnIndex).getText();
+            throw new RuntimeException("Row is empty");
+        return row.get(columnIndex);
     }
 
     @Override
@@ -60,16 +62,49 @@ public class TableModel extends AbstractTableModel {
 
     @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
+//      Helper row indexes
+        if (columnIndex == 0) return false;
         return true;
     }
 
     @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
         CellModel currentModel = data.get(rowIndex).get(columnIndex);
-        currentModel.setText((String) aValue ,this);
+        currentModel.setValue((String) aValue ,this);
         data.get(rowIndex).set(columnIndex, currentModel );
         fireTableCellUpdated(rowIndex, columnIndex);
     }
+
+    public String getNextColumnLabel() {
+        // Convert the last column label to uppercase
+        String lastCol = columnNames.getLast().toUpperCase();
+
+        // Start with an empty StringBuilder to build the next column label
+        StringBuilder nextColLabel = new StringBuilder();
+
+        // Iterate through each character in the last column label
+        for (int i = lastCol.length() - 1; i >= 0; i--) {
+            char currentChar = lastCol.charAt(i);
+
+            // If the current character is 'Z', carry over to the next position
+            if (currentChar == 'Z') {
+                // Replace 'Z' with 'A' and add 'A' to the next position
+                nextColLabel.insert(0, 'A');
+            } else {
+                // Increment the current character by 1
+                nextColLabel.insert(0, (char) (currentChar + 1));
+
+                // Append the remaining characters from the last column label
+                nextColLabel.insert(0, lastCol.substring(0, i));
+
+                // No further carry-over needed, break the loop
+                break;
+            }
+        }
+
+        return nextColLabel.toString();
+    }
+
 
     public void addRow(String value) {
         List<CellModel> row = new ArrayList<>();
@@ -84,25 +119,66 @@ public class TableModel extends AbstractTableModel {
         data.remove(rowIndex);
         fireTableRowsDeleted(rowIndex, rowIndex);
     }
+    public List<CellModel> createEmptyColumn() {
+        List<CellModel> column = new ArrayList<>();
+        for(int i = 0; i < getRowCount(); i++) {
+            column.add(new CellModel("",this));
+        }
+        return column;
+    }
 
-    public void addColumn(String columnName) {
-        columnNames.add(columnName);
+
+    public void insertColumn(int columnIndex, List<CellModel> columnData) {
+//        First create empty last.
+        columnNames.add(getNextColumnLabel());
         for (List<CellModel> row : data) {
             row.add(new CellModel((String) "", this));
         }
+        Set<CellModel> dependedModels = new HashSet<>();
+//        For each column move 1 to right
+        for (int i = getColumnCount() - 1; i > columnIndex; i--) {
+//            For each element in the column
+            for(int j = 0; j < getRowCount(); j++) {
+                dependedModels.addAll(data.get(j).get(i-1).getDependsOnMe());
+                CellModel newCell = new CellModel((String) data.get(j).get(i-1).getValue(), this);
+                data.get(j).set(i, newCell);
+                data.get(j).set(i-1, new CellModel("", this));
+            }
+        }
+
+        for (int i = 0; i < getRowCount(); i++) {
+            data.get(i).set(columnIndex, columnData.get(i));
+        }
+
+        for(CellModel model : dependedModels) {
+            model.revaluate(this);
+        }
+
         fireTableStructureChanged();
     }
 
-    public void removeLastColumn() {
-        int lastIndex = columnNames.size() - 1;
-        if (lastIndex >= 0) {
-            columnNames.remove(lastIndex);
-            for (List<CellModel> row : data) {
-                row.remove(lastIndex);
+    public void deleteColumn(int columnIndex) {
+        // Remove the column from columnNames
+        Set<CellModel> dependedModels = new HashSet<>();
+//        For each column move 1 to right
+        for (int i = columnIndex ; i < getColumnCount() - 1; i++) {
+//            For each element in the column
+            for(int j = 0; j < getRowCount(); j++) {
+                dependedModels.addAll(data.get(j).get(i+1).getDependsOnMe());
+                CellModel newCell = new CellModel((String) data.get(j).get(i+1).getValue(), this);
+                data.get(j).set(i, newCell);
+                data.get(j).set(i+1, new CellModel("", this));
             }
-            fireTableStructureChanged();
         }
+
+        for(CellModel model : dependedModels) {
+            model.revaluate(this);
+        }
+
+        // Notify listeners that the table structure has changed
+        fireTableStructureChanged();
     }
+
 
     public Boolean isValidCell(int rowIndex, int colIndex) {
         if(data.isEmpty()) return false;
@@ -153,7 +229,7 @@ public class TableModel extends AbstractTableModel {
     }
 
     public Object queryCellValue(String query) {
-        String value = queryCellModel(query).getText();
+        String value = queryCellModel(query).getDisplayText();
 
         Object valueObject = new Object();
         try {
@@ -208,7 +284,7 @@ public class TableModel extends AbstractTableModel {
         List<Object> results = new ArrayList<>();
         List<CellModel> models = queryCellRangeModels(query);
         for(CellModel model : models) {
-            String value = model.getText();
+            String value = model.getDisplayText();
             try {
                 Float floatValue = Float.parseFloat(value);
                 System.out.println("Parsed float: " + floatValue);

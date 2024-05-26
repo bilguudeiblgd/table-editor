@@ -3,6 +3,7 @@ package utils;
 import model.TableModel;
 import utils.functions.AvgFunction;
 import utils.functions.Function;
+import utils.functions.PowFunction;
 import utils.functions.SumFunction;
 
 import java.util.ArrayList;
@@ -89,9 +90,12 @@ public class Parser {
             return result;
         } else if (token.getType() == TokenType.LEFT_PAR) {
             consume(TokenType.LEFT_PAR);
-            Object exprResult = expr();
+            List<Object> exprResult = expr();
+            if (exprResult.isEmpty()) {
+                throw new RuntimeException("Empty expression: " + token);
+            }
             consume(TokenType.RIGHT_PAR);
-            result.add(exprResult);
+            result.add(exprResult.getFirst());
             return result;
         } else {
             throw new RuntimeException("Unexpected token: " + token);
@@ -111,6 +115,9 @@ public class Parser {
                     break;
                 case "AVG":
                     function = new AvgFunction();
+                    break;
+                case "POW":
+                    function = new PowFunction();
                     break;
             }
 //            Parse array
@@ -156,7 +163,7 @@ public class Parser {
 
     private List<Object> L4() {
         List<Object> results = L3();
-        Object result = results.get(0);
+        Object result = results.getFirst();
 
         while (currentToken.getValue().equals("*") || currentToken.getValue().equals("/")) {
             if (currentToken.getValue().equals("*")) {
