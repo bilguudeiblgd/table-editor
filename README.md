@@ -1,12 +1,19 @@
 # Table Editor
 Jet Brains internship project for making table editor with parser.
 
+### Done
+- [x] Parsing
+- [x] Functions
+- [x] Reference to cells and cell ranges (only absolute cells)
+       
+
 
 ## Functionalities/Tutorial
 Brief overview of the functionalities and usage.
+
 ### Functions.
 > A1:C2. Use cell Labels for range with colon.
-> Support functions SUM, AVG, POW(arg, arg).
+> Support functions SUM, AVG, POW(arg, arg), COUNT, MIN, MAX, CONCAT.
 
   
 ![functions](https://github.com/bilguudeiblgd/table-editor/assets/68243292/7129c18a-3cd2-48b7-84b5-8115a038eb22)
