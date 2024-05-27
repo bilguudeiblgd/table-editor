@@ -1,21 +1,20 @@
 package parser.functions;
 
+import parser.utils.GeneralUtils;
+
 public class AvgFunction extends Function {
 
     @Override
     public Object calculate() {
-        double sum = 0;
         if (arguments.isEmpty())
             throw new IllegalArgumentException("Argument empty.");
-
+        Object sum = arguments.getFirst();
         for (Object arg : arguments) {
-            if (arg instanceof Number) {
-                sum += ((Number) arg).doubleValue();
-            } else {
-                throw new IllegalArgumentException("Invalid argument type for AvgFunction. Expected Number.");
-            }
+            sum = GeneralUtils.addNumbers(sum, arg);
         }
-        sum /= arguments.size();
+//      Counted 1 extra.
+        sum = GeneralUtils.subNumbers(sum, arguments.getFirst());
+        sum = GeneralUtils.divideNumbers(sum, arguments.size());
         return sum;
     }
 }

@@ -177,6 +177,7 @@ public class TablePanel extends JPanel {
                 String[] rows = clipboardData.split("\n");
                 int startRow = table.getSelectedRow();
                 int startCol = table.getSelectedColumn();
+//              #TODO: BUG, EMPTY CELLS ARE NOT PASTED(try copying empty with expression cells)
                 for (int i = 0; i < rows.length; i++) {
                     String[] cells = rows[i].split("\t");
                     for (int j = 0; j < cells.length; j++) {
