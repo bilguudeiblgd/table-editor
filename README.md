@@ -54,7 +54,7 @@ Brief overview of the functionalities and usage.
 ![functions](https://github.com/bilguudeiblgd/table-editor/assets/68243292/7129c18a-3cd2-48b7-84b5-8115a038eb22)
 
 
-### Copying/Pasing
+### Copying/Pasting
 
 > CTRL+C -> CTRL + V
   
