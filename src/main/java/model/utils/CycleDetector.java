@@ -6,7 +6,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class CycleDetector {
-
+    /** Util for finding loops. **/
     public static boolean hasCycle(CellModel cell) {
         Set<CellModel> visited = new HashSet<>();
         Set<CellModel> stack = new HashSet<>();

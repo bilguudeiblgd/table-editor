@@ -50,7 +50,6 @@ public class Parser {
         while(currentToken.getType() != TokenType.RIGHT_PAR) {
 //                        Can be just expr() or A1:B1 which is L1.
             List<Object> argumentPack = expr();
-            System.out.println("Parsing argument: " + argumentPack.getFirst());
             arguments.addAll(argumentPack);
 
             if(currentToken.getType() == TokenType.COMMA) {
@@ -71,7 +70,6 @@ public class Parser {
             Token nextToken = peek(1);
             Object obj = table.queryCellValue(token.getValue());
 
-            System.out.println("table query: " + obj.toString());
             result.add(obj);
             return result;
         }
@@ -227,7 +225,6 @@ public class Parser {
 //      Morever for the scalability where complex functions could return multiple values...
         if(results.size() != 1)
             throw new RuntimeException("Returned more than one value: ");
-        System.out.println("Parser result: >" + results.getFirst().toString() + "<");
         return results.getFirst();
     }
 }

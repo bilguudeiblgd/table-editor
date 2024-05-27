@@ -74,13 +74,8 @@ public class TableModel extends AbstractTableModel {
         if(columnIndex == 0) return;
         data.get(rowIndex).get(columnIndex).setValue((String) aValue ,this);
 //      #TODO: Tracking dependencies for knowing which cells changed will make it efficient
-//        fireTableCellUpdated(rowIndex, columnIndex);
         fireTableDataChanged();
 //      After the table changes
-    }
-
-    public Object createCell(String value) {
-        return (Object) new CellModel(value, this);
     }
 
     public String getNextColumnLabel() {

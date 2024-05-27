@@ -146,11 +146,5 @@ public class Lexer {
         return tokens;
     }
 
-//    public static void main(String[] args) {
-//        Lexer lexer = new Lexer("sin(x) + cos(y) * z - 42");
-//        List<Token> tokens = lexer.tokenize();
-//        for (Token token : tokens) {
-//            System.out.println(token);
-//        }
-//    }
+
 }

@@ -9,13 +9,13 @@ import java.util.*;
 
 public class CellModel {
 //    Value is any input. Either expression or just text.
-    String value;
+    public String value;
 //    What flows into the parser
-    String expression;
+    private String expression;
 //    What is displayed on the screen
-    String displayText;
+    public String displayText;
 //    Stores which cells depends on this cell.
-    Set<CellModel> dependsOnMe;
+    public Set<CellModel> dependsOnMe;
     CellModel() {
         this.value = "";
         this.expression ="";
@@ -33,9 +33,6 @@ public class CellModel {
     }
     public String getValue() {
         return this.value;
-    }
-    private String getExpression() {
-        return this.expression;
     }
 
     public void setValue(String value, TableModel table) {
@@ -105,7 +102,6 @@ public class CellModel {
             throw new RuntimeException("Dependency cycle detected!");
         }
         for ( CellModel model : dependsOnMe) {
-            System.out.println("Propogating to" + model);
             model.revaluate(table);
         }
     }

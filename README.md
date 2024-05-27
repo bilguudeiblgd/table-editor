@@ -11,21 +11,21 @@ Jet Brains test task; making table editor with parser.
 
 ```
 
-| root
+root/
 | TableEditorApp.java - the main entry point for the app
-## model
-|---- utils
+| model/
+|---- utils/
 |     |---- CycleDetector.java  
 |---- CellModel.java - the data and methods included
 |---- TableModel.java - the data of the table
 
-## parser
-|---- functions
+| parser/
+|---- functions/
 |     |---- Function - abstract functions
 |     |---- SumFunction - functions inherited
 |     |---- ConcatFunction - functions inherit
 |     ...
-|---- utils
+|---- utils/
 |     |---- GeneralUtils.java - utils for parser
 |---- Evaluator.java - a wrapper class for parser.
 |---- Lexer.java - lexer component. Handles tokenization.
@@ -33,8 +33,8 @@ Jet Brains test task; making table editor with parser.
 |---- Token.java - Token class
 |---- TokenType.java - Token types.
 
-## ui
-|---- utils
+| ui/
+|---- utils/
 |     |---- Popupmenu
 |---- CustomTableCellEditor.java - Customized cell editor.
 |---- CustomTableCellRenderer.java - Customized cell renderer.

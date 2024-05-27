@@ -76,7 +76,7 @@ public class TablePanel extends JPanel {
         });
 
         // Create the "Add 10 More Columns" button
-        addTenColumnsButton = new JButton("Add 10 More Columns");
+        addTenColumnsButton = new JButton("+ Columns");
         addTenColumnsButton.addActionListener(e -> {
             int colCount = tableModel.getColumnCount();
             for (int i = 0; i < 10; i++) {
@@ -129,7 +129,6 @@ public class TablePanel extends JPanel {
         table.getActionMap().put("pasteAction", pasteAction);
         table.getActionMap().put("copyAction", copyAction);
 
-
     }
 
 
@@ -149,7 +148,6 @@ public class TablePanel extends JPanel {
             }
             clipboardData.append('\n');
         }
-        System.out.println("Clipboard Data: " + clipboardData);
         StringSelection stringSelection = new StringSelection(clipboardData.toString());
         Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
         clipboard.setContents(stringSelection, null);
