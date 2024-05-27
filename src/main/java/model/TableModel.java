@@ -279,18 +279,7 @@ public class TableModel extends AbstractTableModel {
     }
 
     public Object queryCellValue(String query) {
-        String value = queryCellModel(query).getDisplayText();
-
-        Object valueObject = new Object();
-        try {
-            Float floatValue = Float.parseFloat(value);
-            System.out.println("Parsed float: " + floatValue);
-            valueObject = floatValue;
-        } catch(NumberFormatException e) {
-            System.err.println("Invalid number format: " + value);
-        }
-
-        return valueObject;
+        return queryCellModel(query).getDisplayText();
     }
     public List<CellModel> queryCellRangeModels(String query) {
         int splitIndex = 0;
@@ -335,13 +324,7 @@ public class TableModel extends AbstractTableModel {
         List<CellModel> models = queryCellRangeModels(query);
         for(CellModel model : models) {
             String value = model.getDisplayText();
-            try {
-                Float floatValue = Float.parseFloat(value);
-                System.out.println("Parsed float: " + floatValue);
-                results.add(floatValue);
-            } catch(NumberFormatException e) {
-                System.err.println("Invalid number format: " + value);
-            }
+            results.add(value);
         }
         return results;
 

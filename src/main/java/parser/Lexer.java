@@ -16,7 +16,11 @@ public class Lexer {
     static {
         functionNames.put("SUM", true);
         functionNames.put("AVG", true);
+        functionNames.put("CONCAT", true);
+        functionNames.put("MAX", true);
+        functionNames.put("MIN", true);
         functionNames.put("POW", true);
+        functionNames.put("COUNT", true);
         // Add other function names here if needed
     }
 

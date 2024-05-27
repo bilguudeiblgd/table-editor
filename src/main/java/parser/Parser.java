@@ -1,10 +1,8 @@
 package parser;
 
 import model.TableModel;
-import parser.functions.AvgFunction;
-import parser.functions.Function;
-import parser.functions.PowFunction;
-import parser.functions.SumFunction;
+import parser.functions.*;
+import parser.utils.GeneralUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -73,7 +71,7 @@ public class Parser {
             Token nextToken = peek(1);
             Object obj = table.queryCellValue(token.getValue());
 
-            System.out.println("table query A1: " + obj.toString());
+            System.out.println("table query: " + obj.toString());
             result.add(obj);
             return result;
         }
@@ -88,6 +86,7 @@ public class Parser {
             consume(TokenType.NUMBER);
             result.add(Integer.parseInt(token.getValue()));
             return result;
+
         } else if (token.getType() == TokenType.LEFT_PAR) {
             consume(TokenType.LEFT_PAR);
             List<Object> exprResult = expr();
@@ -107,20 +106,18 @@ public class Parser {
     private List<Object> L2() {
 //        If not function will go to L1.
         if (currentToken.getType() == TokenType.FUNCTION) {
-            Function function = new Function();
+            Function function = switch (currentToken.getValue()) {
+                case "SUM" -> new SumFunction();
+                case "AVG" -> new AvgFunction();
+                case "POW" -> new PowFunction();
+                case "MIN" -> new MinFunction();
+                case "MAX" -> new MaxFunction();
+                case "CONCAT" -> new ConcatFunction();
+                case "COUNT" -> new CountFunction();
+                default -> throw new UnsupportedOperationException("Unsupported function: " + currentToken.getValue());
+            };
 
-            switch (currentToken.getValue()) {
-                case "SUM":
-                    function = new SumFunction();
-                    break;
-                case "AVG":
-                    function = new AvgFunction();
-                    break;
-                case "POW":
-                    function = new PowFunction();
-                    break;
-            }
-//            Parse array
+            //            Parse array
             consume(TokenType.FUNCTION);
 
             List<Object> arguments = parseFunctionArguments();
@@ -137,28 +134,26 @@ public class Parser {
     }
 
     private List<Object> L3() {
-        int signChange = 1;
+        int signChange = 0;
+
         while (currentToken.getType() == TokenType.UNARY_OPERATOR) {
             if (currentToken.getValue().equals("+")) {
-                consume(TokenType.UNARY_OPERATOR);
                 signChange = 1;
             } else if (currentToken.getValue().equals("-")) {
-                consume(TokenType.UNARY_OPERATOR);
                 signChange = -1;
             }
+            consume(TokenType.UNARY_OPERATOR);
         }
 
         List<Object> results = L2();
         Object result = results.getFirst();
+        if (signChange == 0 )
+            return results;
 
         System.out.println(result);
-        if (result instanceof Number) {
-            float modifiedValue = ((Number) result).floatValue() * signChange;
-            results.set(0, modifiedValue);
-            return results;
-        } else {
-            throw new RuntimeException("Invalid type for unary operation: " + result);
-        }
+        Object modifiedValue = GeneralUtils.multiplyNumbers(result, signChange);
+        results.set(0, modifiedValue);
+        return results;
     }
 
     private List<Object> L4() {
@@ -172,26 +167,18 @@ public class Parser {
                 if (rights.isEmpty())
                     throw new RuntimeException("Missing tokens on the rhl: " + rights);
                 Object right = rights.getFirst();
+                result = GeneralUtils.multiplyNumbers(result, right);
+                results.set(0, result);
 
-                if (result instanceof Number && right instanceof Number) {
-                    result = ((Number) result).floatValue() * ((Number) right).floatValue();
-                    results.set(0, result);
-                } else {
-                    throw new RuntimeException("Invalid type for multiplication: " + result + " * " + right);
-                }
             } else if (currentToken.getValue().equals("/")) {
                 consume(TokenType.BINARY_OPERATOR);
                 List<Object> rights = L3();
                 if (rights.isEmpty())
                     throw new RuntimeException("Missing tokens on the rhl: " + rights);
                 Object right = rights.getFirst();
+                result = GeneralUtils.divideNumbers(result, right);
+                results.set(0, result);
 
-                if (result instanceof Number && right instanceof Number) {
-                    result = ((Number) result).floatValue() / ((Number) right).floatValue();
-                    results.set(0, result);
-                } else {
-                    throw new RuntimeException("Invalid type for division: " + result + " / " + right);
-                }
             }
         }
         return results;
@@ -211,26 +198,18 @@ public class Parser {
                 if (rights.isEmpty())
                     throw new RuntimeException("Missing tokens on the rhl: " + rights);
                 Object right = rights.getFirst();
+                result = GeneralUtils.addNumbers(result, right);
+                results.set(0, result);
 
-                if (result instanceof Number && right instanceof Number) {
-                    result = ((Number) result).floatValue() + ((Number) right).floatValue();
-                    results.set(0, result);
-                } else {
-                    throw new RuntimeException("Invalid type for addition: " + result + " + " + right);
-                }
             } else if (currentToken.getValue().equals("-")) {
                 consume(TokenType.BINARY_OPERATOR);
                 List<Object> rights = L4();
                 if (rights.isEmpty())
-                    throw new RuntimeException("Missing tokens on the rhl: " + rights);
+                        throw new RuntimeException("Missing tokens on the rhl: " + rights);
                 Object right = rights.getFirst();
+                result = GeneralUtils.subNumbers(result, right);
+                results.set(0, result);
 
-                if (result instanceof Number && right instanceof Number) {
-                    result = ((Number) result).floatValue() - ((Number) right).floatValue();
-                    results.set(0, result);
-                } else {
-                    throw new RuntimeException("Invalid type for subtraction: " + result + " - " + right);
-                }
             }
         }
         return results;
@@ -247,6 +226,7 @@ public class Parser {
 //      Thus to have them flow through parser we're using general list of return values.
         if(results.size() != 1)
             throw new RuntimeException("Returned more than one value: ");
+        System.out.println("Parser result: " + results.getFirst().toString());
         return results.getFirst();
     }
 }
