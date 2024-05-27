@@ -1,5 +1,5 @@
 # Table Editor
-Jet Brains internship project for making table editor with parser.
+Jet Brains test task; making table editor with parser.
 
 ### Done
 - [x] Parsing
