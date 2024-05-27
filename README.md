@@ -8,7 +8,7 @@ Jet Brains internship project for making table editor with parser.
        
 
 
-## Functionalities/Tutorial
+## Functionalities
 Brief overview of the functionalities and usage.
 
 ### Functions.
@@ -31,3 +31,21 @@ Brief overview of the functionalities and usage.
 >
 
 ![table_editors](https://github.com/bilguudeiblgd/table-editor/assets/68243292/e4da4155-ebb1-4cb4-a163-f11a7677bf31)
+
+
+# Parser.
+
+My parser consist of Lexer and Parser. Lexer tokenizes the input and also has some sanitization for the expression. Parser is LL(1) parser implemented in recursive descent way.
+
+### Operator precendence.
+
+| Precedence | Operator      | Description                         | Associativity     |
+|------------|---------------|-------------------------------------|-------------------|
+| 1          | `:`           | Cell Scope resolution               | Left-to-right     |
+| 2          | `()`          | Function call                       | Left-to-right     |
+| 3          | `+` `-`       | Unary plus and minus                | Right-to-left     |
+| 4          | `*` `/`       | Multiplication, division            | Left-to-right     |
+| 5          | `+` `-`       | Addition, subtraction               | Left-to-right     |
+
+As in the code, https://github.com/bilguudeiblgd/table-editor/blob/main/src/main/java/parser/Parser.java I use L1, L2, L3, L4, L5 functions which corresponds to this precendence.
+
