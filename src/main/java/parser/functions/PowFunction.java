@@ -3,7 +3,7 @@ package parser.functions;
 import java.util.MissingFormatArgumentException;
 
 public class PowFunction extends Function {
-
+//  #TODO: adapt Object way
     @Override
     public Object calculate() {
         if(arguments.size() != 2) {

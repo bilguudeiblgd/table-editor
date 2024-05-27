@@ -116,9 +116,19 @@ public class TablePanel extends JPanel {
         };
         table.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_V, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()), "pasteAction");
 
+        Action deleteAction = new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                deleteSelectedCells();
+            }
+        };
+        table.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), "deleteAction");
 
+        table.getActionMap().put("deleteAction", deleteAction);
         table.getActionMap().put("pasteAction", pasteAction);
         table.getActionMap().put("copyAction", copyAction);
+
+
     }
 
     private void printColumnDetails() {
@@ -144,7 +154,7 @@ public class TablePanel extends JPanel {
             for (int j = 0; j < cols.length; j++) {
                 CellModel cell = (CellModel) table.getValueAt(rows[i], cols[j]);
 //              Clipboard: rows:cols:expression
-                clipboardData.append( i + selectionStart.y).append(":").append(j + selectionStart.x).append(":").append(cell.getValue());
+                clipboardData.append( i + selectionStart.y).append("-:-").append(j + selectionStart.x).append("-:-").append(cell.getValue());
                 if (j < cols.length - 1) {
                     clipboardData.append('\t');
                 }
@@ -170,7 +180,7 @@ public class TablePanel extends JPanel {
                 for (int i = 0; i < rows.length; i++) {
                     String[] cells = rows[i].split("\t");
                     for (int j = 0; j < cells.length; j++) {
-                        String[] parts = cells[j].split(":");
+                        String[] parts = cells[j].split("-:-");
 //                      #TODO:  Use row,col for translating the expression's coordinates
                         int row = Integer.parseInt(parts[0]);
                         int col = Integer.parseInt(parts[1]);
@@ -199,6 +209,18 @@ public class TablePanel extends JPanel {
             table.getColumnModel().getSelectionModel().addSelectionInterval(minX, maxX);
         }
     }
+
+    private void deleteSelectedCells() {
+        int[] rows = table.getSelectedRows();
+        int[] cols = table.getSelectedColumns();
+
+        for (int i = 0; i < rows.length; i++) {
+            for (int j = 0; j < cols.length; j++) {
+                table.setValueAt("", rows[i], cols[j]);
+            }
+        }
+    }
+
 
 
     private class MouseListener extends MouseAdapter {

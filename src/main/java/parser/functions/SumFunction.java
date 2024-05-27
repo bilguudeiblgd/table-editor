@@ -1,17 +1,19 @@
 package parser.functions;
 
+import parser.utils.GeneralUtils;
+
 public class SumFunction extends Function {
 
     @Override
     public Object calculate() {
-        double sum = 0;
+        if (arguments.isEmpty())
+            throw new IllegalArgumentException("Argument empty.");
+        Object sum = arguments.getFirst();
         for (Object arg : arguments) {
-            if (arg instanceof Number) {
-                sum += ((Number) arg).doubleValue();
-            } else {
-                throw new IllegalArgumentException("Invalid argument type for SumFunction. Expected Number.");
-            }
+            sum = GeneralUtils.addNumbers(sum, arg);
         }
+//      Counted 1 extra.
+        sum = GeneralUtils.subNumbers(sum, arguments.getFirst());
         return sum;
     }
 }
