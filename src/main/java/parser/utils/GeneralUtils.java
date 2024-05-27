@@ -66,7 +66,7 @@ public class GeneralUtils {
         } else if (a instanceof Long || b instanceof Long) {
             return a.longValue() / b.longValue();
         } else {
-            return a.intValue() / b.intValue();
+            return a.doubleValue() / b.doubleValue();
         }
     }
 
@@ -76,7 +76,7 @@ public class GeneralUtils {
         } else if (obj instanceof String) {
             String str = (String) obj;
             try {
-                if (str.contains(".") || str.contains("e") || str.contains("E")) {
+                if (str.contains(".") ) {
                     return Double.parseDouble(str);
                 } else {
                     return Integer.parseInt(str);

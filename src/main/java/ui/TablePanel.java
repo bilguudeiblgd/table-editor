@@ -55,7 +55,7 @@ public class TablePanel extends JPanel {
 
         // Resize the cells in the labelColumn
         TableColumn labelColumn = table.getColumnModel().getColumn(0);
-        labelColumn.setMaxWidth(15);
+        labelColumn.setPreferredWidth(20);
 
         // Set the grid color (optional)
         table.setGridColor(Color.DARK_GRAY);
@@ -122,6 +122,7 @@ public class TablePanel extends JPanel {
                 deleteSelectedCells();
             }
         };
+        table.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, 0), "deleteAction");
         table.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), "deleteAction");
 
         table.getActionMap().put("deleteAction", deleteAction);
@@ -131,19 +132,6 @@ public class TablePanel extends JPanel {
 
     }
 
-    private void printColumnDetails() {
-        TableColumnModel columnModel = table.getColumnModel();
-        for (int i = 0; i < columnModel.getColumnCount(); i++) {
-            TableColumn column = columnModel.getColumn(i);
-            System.out.println("Column Index: " + i);
-            System.out.println("Preferred Width: " + column.getPreferredWidth());
-            System.out.println("Min Width: " + column.getMinWidth());
-            System.out.println("Max Width: " + column.getMaxWidth());
-            System.out.println("Width: " + column.getWidth());
-            System.out.println("Header Value: " + column.getHeaderValue());
-            System.out.println("------------------------------------");
-        }
-    }
 
     private void copySelectedCellsToClipboard() {
         StringBuilder clipboardData = new StringBuilder();
@@ -177,7 +165,7 @@ public class TablePanel extends JPanel {
                 String[] rows = clipboardData.split("\n");
                 int startRow = table.getSelectedRow();
                 int startCol = table.getSelectedColumn();
-//              #TODO: BUG, EMPTY CELLS ARE NOT PASTED(try copying empty with expression cells)
+//              Parsing the clipboard and putting it back.
                 for (int i = 0; i < rows.length; i++) {
                     String[] cells = rows[i].split("\t");
                     for (int j = 0; j < cells.length; j++) {
@@ -186,9 +174,14 @@ public class TablePanel extends JPanel {
                         int row = Integer.parseInt(parts[0]);
                         int col = Integer.parseInt(parts[1]);
                         String value = "";
-                        if(!parts[2].isEmpty()) {
+//                      If it's not empty cell
+                        if(parts.length == 3) {
                             value = parts[2];
                         }
+                        if(startRow + i >= table.getRowCount())
+                            tableModel.insertRow(startRow + i, tableModel.createEmptyRow());
+                        if(startCol + j >= table.getColumnCount())
+                            tableModel.insertColumn(startCol + j, tableModel.createEmptyColumn());
                         table.setValueAt(value, startRow + i, startCol + j);
                     }
                 }
@@ -217,6 +210,8 @@ public class TablePanel extends JPanel {
 
         for (int i = 0; i < rows.length; i++) {
             for (int j = 0; j < cols.length; j++) {
+//                CellModel cell = (CellModel) table.getValueAt(rows[i], cols[j]);
+//                cell.setValue("", tableModel);
                 table.setValueAt("", rows[i], cols[j]);
             }
         }

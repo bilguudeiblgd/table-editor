@@ -70,10 +70,13 @@ public class TableModel extends AbstractTableModel {
 
     @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-        CellModel currentModel = data.get(rowIndex).get(columnIndex);
-        currentModel.setValue((String) aValue ,this);
-        data.get(rowIndex).set(columnIndex, currentModel );
-        fireTableCellUpdated(rowIndex, columnIndex);
+//      Let's not change the label row
+        if(columnIndex == 0) return;
+        data.get(rowIndex).get(columnIndex).setValue((String) aValue ,this);
+//      #TODO: Tracking dependencies for knowing which cells changed will make it efficient
+//        fireTableCellUpdated(rowIndex, columnIndex);
+        fireTableDataChanged();
+//      After the table changes
     }
 
     public Object createCell(String value) {
@@ -104,11 +107,6 @@ public class TableModel extends AbstractTableModel {
         return nextColLabel.toString();
     }
 
-
-    public void removeRow(int rowIndex) {
-        data.remove(rowIndex);
-        fireTableRowsDeleted(rowIndex, rowIndex);
-    }
     public List<CellModel> createEmptyColumn() {
         List<CellModel> column = new ArrayList<>();
         for(int i = 0; i < getRowCount(); i++) {
@@ -192,19 +190,30 @@ public class TableModel extends AbstractTableModel {
         for (int i = columnIndex ; i < getColumnCount() - 1; i++) {
 //            For each element in the column
             for(int j = 0; j < getRowCount(); j++) {
-                dependedModels.addAll(data.get(j).get(i+1).getDependsOnMe());
+                dependedModels.addAll(data.get(j).get(i).getDependsOnMe());
                 CellModel newCell = new CellModel((String) data.get(j).get(i+1).getValue(), this);
                 data.get(j).set(i, newCell);
                 data.get(j).set(i+1, new CellModel("", this));
             }
         }
 
-        for(CellModel model : dependedModels) {
-            model.revaluate(this);
+        if(getColumnCount() > 2) {
+
+            this.columnNames.removeLast();
+            // Remove the last column from each row
+            for (List<CellModel> row : data) {
+                dependedModels.addAll(row.getLast().getDependsOnMe());
+                row.removeLast();
+            }
         }
 
         // Notify listeners that the table structure has changed
         fireTableStructureChanged();
+        fireTableDataChanged();
+
+        for(CellModel model : dependedModels) {
+            model.revaluate(this);
+        }
     }
 
     public void deleteRow(int rowIndex) {
@@ -213,13 +222,23 @@ public class TableModel extends AbstractTableModel {
 //        For each column move 1 to right
         for (int i = rowIndex ; i < getRowCount() - 1; i++) {
 //            For each element in the column
-            for(int j = 0; j < getColumnCount(); j++) {
-                dependedModels.addAll(data.get(i+1).get(j).getDependsOnMe());
+//            First element of the column is the labels
+            for(int j = 1; j < getColumnCount(); j++) {
+                dependedModels.addAll(data.get(i).get(j).getDependsOnMe());
+//                Get myself out of those dependedModels
                 CellModel newCell = new CellModel((String) data.get(i+1).get(j).getValue(), this);
                 data.get(i).set(j, newCell);
                 data.get(i+1).set(j, new CellModel("", this));
             }
         }
+
+        if (getRowCount() > 2) {
+            for (CellModel model : data.getLast()) {
+                dependedModels.addAll(model.getDependsOnMe());
+            }
+            data.removeLast();
+        }
+
 
         for(CellModel model : dependedModels) {
             model.revaluate(this);
@@ -227,6 +246,7 @@ public class TableModel extends AbstractTableModel {
 
         // Notify listeners that the table structure has changed
         fireTableStructureChanged();
+        fireTableDataChanged();
     }
 
 

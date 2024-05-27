@@ -11,6 +11,8 @@ public class CustomTableCellEditor extends DefaultCellEditor {
     public CustomTableCellEditor() {
         super(new JTextField());
         textField = (JTextField) getComponent();
+        textField.setBorder(BorderFactory.createEmptyBorder());
+
     }
 
     @Override
@@ -18,6 +20,15 @@ public class CustomTableCellEditor extends DefaultCellEditor {
         // Set the editor value to the actual underlying value
         CellModel cell = (CellModel) value;
         textField.setText(cell.getValue());
+
+        if (isSelected) {
+            textField.setBackground(Color.LIGHT_GRAY);
+            textField.setForeground(table.getSelectionForeground());
+        } else {
+            textField.setBackground(table.getBackground());
+            textField.setForeground(table.getForeground());
+        }
+
         return textField;
     }
 

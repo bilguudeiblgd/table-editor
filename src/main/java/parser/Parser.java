@@ -61,7 +61,7 @@ public class Parser {
 
         return arguments;
     }
-    // TODO: finish Cell parser implementation
+    // Level 1: End values. L1 return actual values we can do operations on.
     private List<Object> L1() {
         List<Object> result = new ArrayList<>();
         Token token = currentToken;
@@ -102,7 +102,7 @@ public class Parser {
     }
 
 
-
+//  L2 is for taking care of functions.
     private List<Object> L2() {
 //        If not function will go to L1.
         if (currentToken.getType() == TokenType.FUNCTION) {
@@ -132,7 +132,7 @@ public class Parser {
 
         return L1();
     }
-
+//  L3 for UNARY_OPERATORS. UNARY_OPERATORS operate right->to->left.
     private List<Object> L3() {
         int signChange = 0;
 
@@ -155,7 +155,7 @@ public class Parser {
         results.set(0, modifiedValue);
         return results;
     }
-
+//  L4: Multiplication and division. Have higher priority than addition.
     private List<Object> L4() {
         List<Object> results = L3();
         Object result = results.getFirst();
@@ -183,7 +183,7 @@ public class Parser {
         }
         return results;
     }
-
+//  L5: Addition and subtraction.
     private List<Object> L5() {
         List<Object> results = L4();
 
@@ -224,9 +224,10 @@ public class Parser {
 //      In the top-most node we will have 1 value.
 //      We use results as an array as we have some A1:B1 range values which will look like (A1, B1) and so on.
 //      Thus to have them flow through parser we're using general list of return values.
+//      Morever for the scalability where complex functions could return multiple values...
         if(results.size() != 1)
             throw new RuntimeException("Returned more than one value: ");
-        System.out.println("Parser result: " + results.getFirst().toString());
+        System.out.println("Parser result: >" + results.getFirst().toString() + "<");
         return results.getFirst();
     }
 }

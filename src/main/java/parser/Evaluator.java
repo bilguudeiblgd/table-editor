@@ -14,11 +14,5 @@ public class Evaluator {
         Parser parser = new Parser(tokens, table);
         return parser.parse();
     }
-
-    public static void main(String[] args) {
-        String expression = "-3 + 5 * (10 - 6) / 2";
-        Object result = evaluate(expression, new TableModel());
-        System.out.println("Result: " + result);
-    }
 }
 

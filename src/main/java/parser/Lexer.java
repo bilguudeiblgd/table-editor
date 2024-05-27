@@ -73,7 +73,7 @@ public class Lexer {
             identifier.append(advance());
         }
         String value = identifier.toString();
-        if (this.functionNames.containsKey(value))
+        if (functionNames.containsKey(value))
             return new Token(TokenType.FUNCTION, value);
 
 //      Variable are CELL variables.

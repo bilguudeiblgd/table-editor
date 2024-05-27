@@ -25,22 +25,7 @@ public class CellModel {
         this.value = value;
         this.expression = "";
         dependsOnMe = new HashSet<>();
-        if(this.value.startsWith("=")) {
-            this.expression = this.value.substring(1);
-            try {
-                evaluateExpression(table);
-                updateDependency(table);
-                propogateChanges(table);
-            } catch (Exception e) {
-                e.printStackTrace();
-                this.displayText += "ERR#";
-            }
-
-        }
-        else {
-            this.displayText = this.value;
-            propogateChanges(table);
-        }
+        setValue(value, table);
     }
 
     public String getDisplayText() {
@@ -55,7 +40,6 @@ public class CellModel {
 
     public void setValue(String value, TableModel table) {
         this.value = value;
-        System.out.println("Writing to cell");
         if(this.value.startsWith("=")) {
             this.expression = this.value.substring(1);
             try {
@@ -69,7 +53,12 @@ public class CellModel {
         }
         else {
             this.displayText = this.value;
-            propogateChanges(table);
+            try {
+                propogateChanges(table);
+            } catch (Exception e) {
+                e.printStackTrace();
+                this.displayText = "ERR#";
+            }
         }
     }
 
@@ -77,10 +66,13 @@ public class CellModel {
         Object result;
         try {
             result = Evaluator.evaluate(this.expression, table);
-            this.displayText = result.toString();
+            if(result.toString().isEmpty())
+                this.displayText = "ERR#";
+            else
+                this.displayText = result.toString();
 //            As this cell's value changed we need to propogate the changes to other cells that depend on this cell
         } catch(RuntimeException e) {
-            this.displayText = "ERROR";
+            this.displayText = "ERR#";
         }
     }
     public void updateDependency(TableModel table) {
@@ -113,7 +105,7 @@ public class CellModel {
             throw new RuntimeException("Dependency cycle detected!");
         }
         for ( CellModel model : dependsOnMe) {
-            System.out.println("Propogating " + model.getDisplayText());
+            System.out.println("Propogating to" + model);
             model.revaluate(table);
         }
     }
@@ -125,7 +117,7 @@ public class CellModel {
                 propogateChanges(table);
             } catch (Exception e) {
                 e.printStackTrace();
-                this.displayText += "ERR#";
+                this.displayText = "ERR#";
             }
         }
         else {
